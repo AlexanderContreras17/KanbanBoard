@@ -361,7 +361,10 @@ h1 {
     display: flex;
     justify-content: center;
 }
-
+.card-actions{
+    display:flex;
+    gap:8px;
+}
 #submitTaskBtn,
 #cancelBtn {
     color: white;

@@ -13,6 +13,7 @@ namespace KanbanBoard.Models
         public string Author { get; set; } = "";
         public string Column { get; set; } = "todo";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public string UserId { get; set; } = "";
 
         // Add a method to validate the card
         public bool IsValid()

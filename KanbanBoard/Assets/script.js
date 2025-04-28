@@ -1,5 +1,10 @@
 ﻿let defaultFormSubmitHandler = null;
-
+let currentUser = localStorage.getItem('KanbanUser') || generateUserId();
+function generateUserId() {
+    const userId = 'user_' + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem('KanbanUser', userId);
+    return userId;
+}
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('cardModal');
     const addCardBtn = document.getElementById('addCardBtn');
@@ -48,11 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const card = {
-            Id: Guid(),
+            Id: getNextCardId(),
             Title: titleInput.value.trim(),
             Author: authorInput.value.trim(),
             Column: columnSelect.value.toLowerCase(),
-            CreatedAt: new Date().toISOString()
+            CreatedAt: new Date().toISOString(),
+            UserId: currentUser
         };
 
         console.log('Sending card data:', JSON.stringify(card));
@@ -178,6 +184,12 @@ function updateBoard(cards) {
         addCardToBoard(card);
     });
 }
+function getNextCardId() {
+    let lastId = parseInt(localStorage.getItem('kanbanLastCardId') || '0', 10);
+    lastId += 1;
+    localStorage.setItem('kanbanLastCardId', lastId);
+    return lastId;
+}
 
 function addCardToBoard(card) {
     if (!card) {
@@ -213,14 +225,20 @@ function addCardToBoard(card) {
     }
 }
 
+
 function createCardElement(card) {
     const title = card.Title || 'Untitled';
     const author = card.Author || 'Unknown';
     const createdAt = card.CreatedAt ? new Date(card.CreatedAt) : new Date();
+    if (!card.UserId) {
+        card.UserId = currentUser;
+    }
+    const isOwner = card.UserId === currentUser;
+    console.log('Card ownership:', { currentUser, cardUserId: card.UserId, isOwner });
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.draggable = true;
+    div.draggable = isOwner;
     div.dataset.id = card.Id;
     div.dataset.card = JSON.stringify(card);
 
@@ -229,21 +247,36 @@ function createCardElement(card) {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        second: '2-digit',
     });
 
     div.innerHTML = `
-        <h3>${escapeHtml(title)}</h3>
-        <p>By: ${escapeHtml(author)}</p>
-        <p>Created: ${formattedDate}</p>
-        <div class="card-actions">
-            <button class="edit-btn">Edit</button>
-            <button class="delete-btn">Delete</button>
-        </div>
-    `;
-     
-    div.querySelector('.edit-btn').addEventListener('click', () => editCard(div));
-    div.querySelector('.delete-btn').addEventListener('click', () => deleteCard(div));
+    <h3>${escapeHtml(title)}</h3>
+    <p>By: ${escapeHtml(author)}</p>
+    <p>Card ID: ${escapeHtml(card.Id.toString())}</p>
+
+    <p>Created: ${formattedDate}</p>
+    <div class="card-actions"></div>
+`;
+
+
+    const actionsDiv = div.querySelector('.card-actions');
+
+    if (isOwner) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', () => editCard(div));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => deleteCard(div));
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+    }
 
     return div;
 }
