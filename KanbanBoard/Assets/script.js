@@ -256,7 +256,7 @@ function editCard(cardElement) {
     document.getElementById('cardTitle').value = cardData.Title;
     document.getElementById('cardAuthor').value = cardData.Author;
     document.getElementById('cardColumn').value = cardData.Column;
-
+    document.querySelector('#cardModal h2').textContent = 'Edit Task';
     modal.style.display = 'block';
 
     cardForm.onsubmit = async (e) => {
